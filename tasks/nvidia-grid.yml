@@ -1,0 +1,58 @@
+---
+# see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+- name: Apt install linux headers and dependencies
+  ansible.builtin.apt:
+    pkg:
+      - linux-headers-{{ ansible_kernel }}
+      - gcc
+      - make
+      - pkg-config
+    state: latest
+  become: true
+  notify: Restart server
+
+- name: Blacklist nouveau driver module
+  community.general.kernel_blacklist:
+    name: "{{ item }}"
+    state: present
+  become: true
+  with_items:
+    - vga16fb
+    - nouveau
+    - rivafb
+    - nvidiafb
+    - rivatv
+  notify: Restart server
+
+- name: Modiby grub to blacklist nouveau
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    line: 'GRUB_CMDLINE_LINUX="rdblacklist=nouveau"'
+  become: true
+  register: grub
+  notify: Restart server
+
+- name: Update grub
+  ansible.builtin.command:
+    cmd: update-grub
+  become: true
+  when: grub.changed
+
+- name: Flush handlers to apply kernel modules
+  ansible.builtin.meta: flush_handlers
+
+- name: Download NVIDIA GRID driver version {{ nvidia_grid_version}}
+  ansible.builtin.get_url:
+    url: https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_grid_version }}/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run
+    dest: /opt/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run
+    mode: ug+x
+  become: true
+
+- name: Install NVIDIA GRID driver
+  ansible.builtin.shell:
+    chdir: /opt/
+    executable: /bin/sh
+    cmd: /opt/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run --accept-license --no-questions --silent --install-libglvnd
+    creates: /usr/bin/nvidia-smi
+  become: true
+  

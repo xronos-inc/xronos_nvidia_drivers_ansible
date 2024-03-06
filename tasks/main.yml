@@ -1,0 +1,16 @@
+---
+- name: Apt update cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600 # 1 hr
+  become: true
+
+- name: Install NVIDIA drivers
+  ansible.builtin.import_tasks: "{{ nvidia_use_grid_drivers | ternary('nvidia-grid.yml', 'nvidia-cuda.yml') }}"
+
+- name: Configure X11
+  ansible.builtin.import_tasks: x11.yml
+
+- name: Configure nvidia-container
+  ansible.builtin.import_tasks: nvidia-container.yml
+  when: nvidia_install_container

@@ -1,0 +1,24 @@
+---
+# see https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#package-manager
+# see https://docs.nvidia.com/datacenter/tesla/drivers/index.html
+
+- name: Apt install cuda keyring
+  ansible.builtin.apt:
+    # repo format is distro + version without a period, i.e. ubuntu2204/x86_64
+    deb: "https://developer.download.nvidia.com/compute/cuda/repos/{{ nvidia_distroversion }}/{{ ansible_architecture }}/cuda-keyring_1.1-1_all.deb"
+  become: true
+  register: cuda_keyring
+
+- name: Apt update cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+  when: cuda_keyring.changed
+
+- name: Apt install NVIDIA drivers
+  ansible.builtin.apt:
+    pkg:
+      - cuda
+      - cuda-drivers
+      - cuda-toolkit
+  become: true

@@ -1,0 +1,15 @@
+---
+- name: "Install x11-utils and OpenGL"
+  ansible.builtin.apt:
+    name:
+      - x11-utils
+      - libx11-dev
+      - mesa-utils
+  become: true
+
+- name: Create X11 config
+  ansible.builtin.command:
+    cmd: nvidia-xconfig --preserve-busid --enable-all-gpus
+    creates: /etc/X11/xorg.conf
+  become: true
+  notify: Restart X11

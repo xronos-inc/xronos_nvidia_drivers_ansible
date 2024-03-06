@@ -1,0 +1,13 @@
+---
+- name: Restart X11
+  ansible.builtin.shell:
+    cmd: >
+      systemctl isolate multi-user.target
+      && systemctl isolate graphical.target
+  become: true
+
+- name: Restart server
+  ansible.builtin.reboot:
+  become: true
+  when:
+    - inventory_hostname != "localhost"

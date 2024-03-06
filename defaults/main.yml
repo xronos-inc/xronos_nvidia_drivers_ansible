@@ -1,0 +1,4 @@
+---
+nvidia_use_grid_drivers: true
+nvidia_grid_version: "470.239.06"
+nvidia_install_container: true
