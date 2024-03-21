@@ -15,10 +15,11 @@
   become: true
   when: cuda_keyring.changed
 
-- name: Apt install NVIDIA drivers
+- name: Apt install NVIDIA CUDA drivers
   ansible.builtin.apt:
     pkg:
       - cuda
       - cuda-drivers
       - cuda-toolkit
   become: true
+  notify: Restart server

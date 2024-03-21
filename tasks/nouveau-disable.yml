@@ -1,0 +1,30 @@
+---
+- name: Blacklist nouveau driver module
+  community.general.kernel_blacklist:
+    name: "{{ item }}"
+    state: present
+  become: true
+  with_items:
+    - vga16fb
+    - nouveau
+    - rivafb
+    - nvidiafb
+    - rivatv
+  notify: Restart server
+
+- name: Modiby grub to blacklist nouveau
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    line: 'GRUB_CMDLINE_LINUX="rdblacklist=nouveau"'
+  become: true
+  register: grub
+  notify: Restart server
+
+- name: Update grub
+  ansible.builtin.command:
+    cmd: update-grub
+  become: true
+  when: grub.changed
+
+- name: Flush handlers to apply kernel modules
+  ansible.builtin.meta: flush_handlers

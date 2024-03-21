@@ -5,6 +5,9 @@
     cache_valid_time: 3600 # 1 hr
   become: true
 
+- name: Disable nouveau drivers
+  ansible.builtin.import_tasks: nouveau-disable.yml
+
 - name: Install NVIDIA drivers
   ansible.builtin.include_tasks: "{{ nvidia_use_grid_drivers | ternary('nvidia-grid.yml', 'nvidia-cuda.yml') }}"
 
