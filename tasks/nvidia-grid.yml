@@ -16,6 +16,7 @@
     url: https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_grid_version }}/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run
     dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run
     mode: ug+x
+  become: true
 
 - name: Install NVIDIA GRID drivers
   ansible.builtin.shell:
