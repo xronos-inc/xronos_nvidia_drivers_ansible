@@ -10,6 +10,7 @@
 
 - name: Install NVIDIA drivers
   ansible.builtin.include_tasks: "{{ nvidia_use_grid_drivers | ternary('nvidia-grid.yml', 'nvidia-cuda.yml') }}"
+  when: not nvidia_skip_driver_install
 
 - name: Configure X11
   ansible.builtin.import_tasks: x11.yml
