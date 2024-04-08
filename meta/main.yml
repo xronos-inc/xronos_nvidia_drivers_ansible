@@ -1,8 +1,8 @@
 galaxy_info:
   role_name: xronos_nvidia_drivers_ansible
-  author: Xronos, Inc.
+  company: Xronos Inc.
   description: "Ansible role to install NVIDIA GRID or CUDA drivers."
-  license: proprietery
+  license: BSD-3
   min_ansible_version: "2.15"
   platforms:
     - name: Ubuntu
