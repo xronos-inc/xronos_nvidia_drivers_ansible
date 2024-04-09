@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-License-Identifier: BSD-3-Clause
 ---
 nvidia_use_grid_drivers: true
 nvidia_grid_version: "470.239.06"

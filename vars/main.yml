@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+---
 # distribution and version concatenated string used by NVIDIA and Amazon for some packages
 # Ubuntu 22.04 -> ubuntu2204
 nvidia_distroversion: "{{ (ansible_distribution ~ ansible_distribution_version) | replace('.', '') | lower }}"
