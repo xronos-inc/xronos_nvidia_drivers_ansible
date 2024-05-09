@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: © 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-nvidia_use_grid_drivers: true
-nvidia_grid_version: "470.239.06"
+nvidia_driver_type: "cuda"
+nvidia_grid_release: "17.1"
+nvidia_grid_version: "550.54.17"
+nvidia_tesla_version: "550.54.15"
 nvidia_install_container: true
 nvidia_skip_driver_install: false

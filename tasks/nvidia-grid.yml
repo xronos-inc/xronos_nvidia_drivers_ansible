@@ -14,17 +14,21 @@
   notify: Restart server
 
 - name: Download NVIDIA GRID driver version {{ nvidia_grid_version}}
-  ansible.builtin.get_url:
-    url: https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_grid_version }}/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run
-    dest: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run"
+  ansible.builtin.command:
+    chdir: "{{ ansible_env.HOME }}/.cache"
+    cmd: aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/grid-{{ nvidia_grid_release }}/ .
+    creates: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}-grid-aws.run"
+
+- name: Make installer executable
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}-grid-aws.run"
     mode: ug+x
-  become: true
 
 - name: Install NVIDIA GRID drivers
   ansible.builtin.shell:
     chdir: "{{ ansible_env.HOME }}/.cache"
     executable: /bin/sh
-    cmd: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}.run --accept-license --no-questions --silent --install-libglvnd"
+    cmd: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}-grid-aws.run --accept-license --no-questions --dkms --silent --install-libglvnd"
     creates: /usr/bin/nvidia-smi
   become: true
   notify: Restart server

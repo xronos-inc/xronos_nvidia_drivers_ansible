@@ -10,9 +10,20 @@
 - name: Disable nouveau drivers
   ansible.builtin.import_tasks: nouveau-disable.yml
 
-- name: Install NVIDIA drivers
-  ansible.builtin.include_tasks: "{{ nvidia_use_grid_drivers | ternary('nvidia-grid.yml', 'nvidia-cuda.yml') }}"
-  when: not nvidia_skip_driver_install
+- name: Install NVIDIA GRID drivers
+  ansible.builtin.include_tasks: nvidia-grid.yml
+  when: nvidia_driver_type == "grid"
+        and not nvidia_skip_driver_install
+
+- name: Install NVIDIA Tesla drivers
+  ansible.builtin.include_tasks: nvidia-tesla.yml
+  when: nvidia_driver_type == "tesla"
+        and not nvidia_skip_driver_install
+
+- name: Install NVIDIA CUDA drivers
+  ansible.builtin.include_tasks: nvidia-cuda.yml
+  when: nvidia_driver_type == "cuda"
+        and not nvidia_skip_driver_install
 
 - name: Configure X11
   ansible.builtin.import_tasks: x11.yml

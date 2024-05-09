@@ -1,0 +1,33 @@
+---
+- name: Apt install linux headers and dependencies
+  ansible.builtin.apt:
+    pkg:
+      - linux-headers-{{ ansible_kernel }}
+      - gcc
+      - make
+      - pkg-config
+    state: latest
+  become: true
+  notify: Restart server
+
+- name: Apt install cuda keyring
+  ansible.builtin.apt:
+    # repo format is distro + version without a period, i.e. ubuntu2204/x86_64
+    deb: "https://developer.download.nvidia.com/compute/cuda/repos/{{ nvidia_distroversion }}/{{ ansible_architecture }}/cuda-keyring_1.1-1_all.deb"
+  become: true
+  register: cuda_keyring
+
+- name: Download NVIDIA Tesla driver version {{ nvidia_tesla_version}}
+  ansible.builtin.get_url:
+    url: https://us.download.nvidia.com/tesla/{{ nvidia_tesla_version}}/NVIDIA-Linux-x86_64-{{ nvidia_tesla_version}}.run
+    dest: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_tesla_version }}.run"
+    mode: ug+x
+
+- name: Install NVIDIA Tesla drivers
+  ansible.builtin.shell:
+    chdir: "{{ ansible_env.HOME }}/.cache"
+    executable: /bin/sh
+    cmd: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_tesla_version }}.run --accept-license --no-questions --run-nvidia-xconfig --dkms --disable-nouveau --silent --allow-installation-with-running-driver --install-libglvnd"
+    creates: /usr/bin/nvidia-smi
+  become: true
+  notify: Restart server
