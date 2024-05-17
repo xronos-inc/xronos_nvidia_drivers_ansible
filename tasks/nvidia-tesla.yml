@@ -6,7 +6,8 @@
       - gcc
       - make
       - pkg-config
-    state: latest
+      - dkms
+    state: present
   become: true
   notify: Restart server
 
