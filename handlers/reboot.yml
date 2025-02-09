@@ -1,0 +1,10 @@
+---
+- name: Schedule reboot
+  when: inventory_hostname != "localhost"
+  become: true
+  ansible.builtin.copy:
+    dest: /var/run/reboot-required
+    content: ""
+    force: false
+
+- ansible.builtin.import_tasks: reboot.yml

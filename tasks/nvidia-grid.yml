@@ -1,8 +1,17 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 # see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+
+- name: Query NVIDIA driver version
+  register: _nvidia_driver_query
+  failed_when: false
+  changed_when: false
+  ansible.builtin.command:
+    cmd: nvidia-smi --query-gpu=driver_version --format=csv,noheader
+
 - name: Apt install linux headers and dependencies
+  become: true
   ansible.builtin.apt:
     pkg:
       - linux-headers-{{ ansible_kernel }}
@@ -10,9 +19,6 @@
       - make
       - pkg-config
       - dkms
-    state: present
-  become: true
-  notify: Restart server
 
 - name: Download NVIDIA GRID driver version {{ nvidia_grid_version}}
   ansible.builtin.command:
@@ -25,11 +31,18 @@
     path: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}-grid-aws.run"
     mode: ug+x
 
-- name: Install NVIDIA GRID drivers
+- name: Install NVIDIA GRID driver {{ nvidia_grid_version }}
+  when: nvidia_grid_version not in _nvidia_driver_query.stdout
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
   ansible.builtin.shell:
     chdir: "{{ ansible_env.HOME }}/.cache"
     executable: /bin/sh
     cmd: "{{ ansible_env.HOME }}/.cache/NVIDIA-Linux-x86_64-{{ nvidia_grid_version }}-grid-aws.run --accept-license --no-questions --dkms --silent --install-libglvnd"
-    creates: /usr/bin/nvidia-smi
-  become: true
-  notify: Restart server
+
+- name: Verify NVIDIA driver version
+  register: _nvidia_driver_query
+  failed_when: _nvidia_driver_query.stdout != nvidia_grid_version
+  changed_when: false
+  ansible.builtin.command:
+    cmd: nvidia-smi --query-gpu=driver_version --format=csv,noheader

@@ -1,49 +1,49 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 # download the gpg key and save with extension ".asc", which bypasses the need to dearmor.
 # this is the workaround for the deprecation of ansible.builtin.apt_key for repositories
 # that are not yet 
 - name: Import nvidia-container-toolkit GPG key
+  become: true
   ansible.builtin.get_url:
     url: https://nvidia.github.io/libnvidia-container/gpgkey
     dest: /etc/apt/trusted.gpg.d/nvidia-container-toolkit.asc
     mode: 0644
-  become: true
 
 - name: Add NVIDIA container apt repository
+  become: true
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/trusted.gpg.d/nvidia-container-toolkit.asc] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /"
     update_cache: true
-  become: true
 
 - name: Apt install nvidia-container-toolkit
+  become: true
   ansible.builtin.apt:
     pkg: nvidia-container-toolkit
-  become: true
 
-- name: Stat system docker daemon.json
+- name: Stat docker daemon.json
+  register: _docker_daemon
   ansible.builtin.stat:
     path: /etc/docker/daemon.json
-  register: docker_system_daemon
 
-- name: Load system daemon.json
+- name: Load docker daemon.json
+  when: _docker_daemon.stat.exists
+  register: _docker_daemon_json
   ansible.builtin.slurp:
     src: /etc/docker/daemon.json
-  when: docker_system_daemon.stat.exists
-  register: docker_system_daemon_json
 
-- name: Configure NVIDIA system docker container runtime
-  ansible.builtin.command:
-    cmd: nvidia-ctk runtime configure --runtime=docker
+- name: Configure NVIDIA docker runtime
+  when: not _docker_daemon.stat.exists
+        or not _docker_daemon_json.content
+        or "nvidia-container-runtime" not in (_docker_daemon_json.content | b64decode)
+  register: _docker_runtime
   become: true
-  when: not docker_system_daemon.stat.exists
-        or (docker_system_daemon_json['content'] | length > 0
-          and "nvidia-container-runtime" not in (docker_system_daemon_json.content | b64decode))
-  register: docker_system_container_runtime
+  ansible.builtin.command:
+    cmd: nvidia-ctk runtime configure --runtime=docker --set-as-default
 
 - name: Restart docker service
+  become: true
   ansible.builtin.service:
     name: docker
-    state: "{{ docker_system_container_runtime.changed | ternary('restarted', 'started') }}"
-  become: true
+    state: "{{ _docker_runtime.changed | ternary('restarted', 'started') }}"

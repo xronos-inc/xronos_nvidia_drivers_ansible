@@ -1,0 +1,15 @@
+---
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Query restart required
+  register: _stat_result
+  notify: "xronos_nvidia_drivers_ansible: Schedule reboot"
+  changed_when: false
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+
+- name: Reboot
+  when: _stat_result.stat.exists
+  become: true
+  ansible.builtin.reboot:

@@ -1,0 +1,7 @@
+---
+- name: Apt install nvidia-driver-{{ nvidia_open_release }}
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  ansible.builtin.apt:
+    pkg:
+      - nvidia-driver-{{ nvidia_open_release }}-open

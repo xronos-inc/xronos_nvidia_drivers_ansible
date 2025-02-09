@@ -14,9 +14,10 @@ Provisioning host:
 
 Remote host:
 
-- Ubuntu 22.04
+- Ubuntu 22.04 or 24.04
 - NVIDIA GPU
 - docker (if installing nvidia-container)
+- aws cli (GRID driver only)
 
 ## Example playbook
 
@@ -29,6 +30,35 @@ Remote host:
 
 ## Variables
 
-- `nvidia_use_grid_drivers` (= `true`): Install Amazon-provided NVIDIA GRID drivers from s3. When false, NVIDIA CUDA repository drivers are used instead.
-- `nvidia_grid_version` (see `defaults/main.yml` for default): Version of NVIDIA GRID driver to install. No effect if `nvidia_use_grid_drivers` is false.
-- `nvidia_install_container` (= `true`): Install nvidia-container.
+- `nvidia_driver_install`: Install NVIDIA drivers. Defaults to `true`.
+- `nvidia_driver_type`: Driver installation type. Defaults to `cuda`. Applies only when `nvidia_driver_install` is true.Valid options are:
+  - `cuda`: install cuda drivers from NVIDIA repository.
+  - `grid`: install NVIDIA GRID drivers from Amazon S3 repository. Requires AWS CLI is installed on the remote host.
+  - `tesla`: install NVIDIA Tesla drivers from NVIDIA repository.
+  - `open`: install NVIDIA open driver from Ubuntu repositories.
+- `nvidia_unintall_driver`: Uninstall nvidia driver. May be combined with `nvidia_driver_install` to reinstall drivers. Uses versions numbers to uninstall specific versions. Defaults to `false`.
+- `nvidia_install_container`: Install nvidia-container-toolkit. Defaults to `false`.
+
+Additional variables when `nvidia_driver_type` is `cuda`:
+- `nvidia_cuda_release`: Version of NVIDIA cuda driver to install. See `defaults/main.yml` for the default version.
+
+Additional variables when `nvidia_driver_type` is `grid`:
+- `nvidia_grid_release`: Version of NVIDIA GRID driver to install. See `defaults/main.yml` for the default version.
+
+Additional variables when `nvidia_driver_type` is `tesla`:
+- `nvidia_tesla_release`: Version of NVIDIA Tesla driver to install. See `defaults/main.yml` for the default version.
+
+Additional variabels when `nvidia_driver_type` is `open`:
+- `nvidia_ubuntu_release`: Version of NVIDIA open driver to install. See `defaults/main.yml` for the default version.
+
+## Completely uninstall drivers
+
+```yaml
+- hosts: myhost
+  roles:
+    - name: xronos_nvidia_drivers_ansible
+      role: xronos_nvidia_drivers_ansible
+      vars:
+        nvidia_uninstall_driver: true
+        nvidia_install_driver: false
+```

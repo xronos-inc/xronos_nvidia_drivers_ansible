@@ -1,0 +1,77 @@
+---
+- name: Apt uninstall nvidia-container-toolkit
+  become: true
+  ansible.builtin.apt:
+    state: absent
+    pkg:
+      - nvidia-container-toolkit-base
+      - nvidia-container-toolkit
+      - nvidia-docker2
+
+- name: Stat /usr/local/cuda/bin/cuda-uninstaller
+  register: _cuda_uninstall
+  ansible.builtin.stat:
+    path: /usr/local/cuda/bin/cuda-uninstaller
+
+- name: Run cuda-uninstaller
+  when: _cuda_uninstall.stat.exists
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  ansible.builtin.shell:
+    executable: /bin/sh
+    cmd: /usr/local/cuda/bin/cuda-uninstaller --silent
+
+- name: Stat /usr/bin/nvidia-uninstall
+  register: _nvidia_uninstall
+  ansible.builtin.stat:
+    path: /usr/bin/nvidia-uninstall
+
+- name: Run nvidia-uninstall
+  when: _nvidia_uninstall.stat.exists
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  ansible.builtin.shell:
+    executable: /bin/sh
+    cmd: nvidia-uninstall --silent
+
+- name: Find NVIDIA GRID driver installers
+  register: _nvidia_driver_files
+  ansible.builtin.find:
+    paths: "{{ ansible_env.HOME }}/.cache"
+    patterns: "NVIDIA-Linux-*.run"
+
+- name: Uninstall NVIDIA GRID drivers
+  with_items: "{{ _nvidia_driver_files.files }}"
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  ansible.builtin.shell:
+    chdir: "{{ ansible_env.HOME }}/.cache"
+    executable: /bin/sh
+    cmd: >-
+      {{ item.path }} --uninstall --no-questions --silent
+      && rm {{ item.path }}
+
+- name: Apt uninstall NVIDIA drivers
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  ansible.builtin.apt:
+    state: absent
+    autoremove: true
+    autoclean: true
+    purge: true
+    pkg:
+      - cuda
+      - cuda-drivers
+      - cuda-toolkit
+      - cuda-toolkit-{{ nvidia_cuda_release }}
+      - nvidia-cuda-toolkit
+      - nvidia-prime
+      - nvidia-driver-{{ nvidia_open_release }}
+      - nvidia-driver-{{ nvidia_open_release }}-open
+      - nvidia-dkms-{{ nvidia_open_release }}
+      - nvidia-kernel-common-{{ nvidia_open_release }}
+      - nvidia-kernel-source-{{ nvidia_open_release }}
+      - libnvidia-compute-{{ nvidia_open_release }}
+
+- name: Perform scheduled reboot
+  ansible.builtin.import_tasks: reboot.yml

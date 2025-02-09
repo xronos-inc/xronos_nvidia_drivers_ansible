@@ -1,10 +1,11 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 galaxy_info:
   role_name: xronos_nvidia_drivers_ansible
   company: Xronos Inc.
-  description: "Ansible role to install NVIDIA GRID or CUDA drivers."
+  author: Jeff C. Jensen
+  description: "Ansible role to install NVIDIA GRID, Tesla or CUDA drivers."
   license: BSD-3-Clause
   min_ansible_version: "2.15"
   platforms:

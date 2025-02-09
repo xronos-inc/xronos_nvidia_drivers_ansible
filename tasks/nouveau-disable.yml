@@ -1,32 +1,32 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Blacklist nouveau driver module
-  community.general.kernel_blacklist:
-    name: "{{ item }}"
-    state: present
-  become: true
   with_items:
     - vga16fb
     - nouveau
     - rivafb
     - nvidiafb
     - rivatv
-  notify: Restart server
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  become: true
+  community.general.kernel_blacklist:
+    name: "{{ item }}"
+    state: present
 
-- name: Modiby grub to blacklist nouveau
+- name: Modify grub to blacklist nouveau
+  notify: "xronos_nvidia_drivers_ansible : Schedule reboot"
+  register: grub
+  become: true
   ansible.builtin.lineinfile:
     path: /etc/default/grub
     line: 'GRUB_CMDLINE_LINUX="rdblacklist=nouveau"'
-  become: true
-  register: grub
-  notify: Restart server
 
 - name: Update grub
+  when: grub.changed
+  become: true
   ansible.builtin.command:
     cmd: update-grub
-  become: true
-  when: grub.changed
 
-- name: Flush handlers to apply kernel modules
-  ansible.builtin.meta: flush_handlers
+- name: Perform scheduled reboot
+  ansible.builtin.import_tasks: reboot.yml

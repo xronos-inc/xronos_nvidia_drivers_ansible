@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Xronos Inc.
+# SPDX-FileCopyrightText: (c) 2024 Xronos Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Apt update cache
@@ -7,27 +7,33 @@
     cache_valid_time: 3600 # 1 hr
   become: true
 
+- name: Uninstall NVIDIA drivers
+  when: nvidia_driver_uninstall
+  ansible.builtin.include_tasks: nvidia-uninstall.yml
+
 - name: Disable nouveau drivers
-  ansible.builtin.import_tasks: nouveau-disable.yml
+  when: nvidia_driver_install
+  ansible.builtin.include_tasks: nouveau-disable.yml
 
 - name: Install NVIDIA GRID drivers
+  when: nvidia_driver_install and nvidia_driver_type == "grid"
   ansible.builtin.include_tasks: nvidia-grid.yml
-  when: nvidia_driver_type == "grid"
-        and not nvidia_skip_driver_install
 
 - name: Install NVIDIA Tesla drivers
+  when: nvidia_driver_install and nvidia_driver_type == "tesla"
   ansible.builtin.include_tasks: nvidia-tesla.yml
-  when: nvidia_driver_type == "tesla"
-        and not nvidia_skip_driver_install
 
 - name: Install NVIDIA CUDA drivers
+  when: nvidia_driver_install and nvidia_driver_type == "cuda"
   ansible.builtin.include_tasks: nvidia-cuda.yml
-  when: nvidia_driver_type == "cuda"
-        and not nvidia_skip_driver_install
 
-- name: Configure X11
-  ansible.builtin.import_tasks: x11.yml
+- name: Install NVIDIA open drivers
+  when: nvidia_driver_install and nvidia_driver_type == "open"
+  ansible.builtin.include_tasks: nvidia-open.yml
 
 - name: Configure nvidia-container
-  ansible.builtin.include_tasks: nvidia-container.yml
   when: nvidia_install_container
+  ansible.builtin.include_tasks: nvidia-container.yml
+
+- name: Perform scheduled reboot
+  ansible.builtin.import_tasks: reboot.yml
