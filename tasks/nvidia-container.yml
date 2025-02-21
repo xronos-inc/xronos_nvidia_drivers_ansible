@@ -47,3 +47,22 @@
   ansible.builtin.service:
     name: docker
     state: "{{ _docker_runtime.changed | ternary('restarted', 'started') }}"
+
+- name: Load containerd config.toml
+  register: _containerd_toml
+  ansible.builtin.slurp:
+    src: /etc/containerd/config.toml
+
+- name: Configure NVIDIA containerd runtime
+  when: not _containerd_toml.content
+        or "containerd.runtimes.nvidia" not in (_containerd_toml.content | b64decode)
+  register: _containerd_runtime
+  become: true
+  ansible.builtin.command:
+    cmd: nvidia-ctk runtime configure --runtime=containerd --set-as-default
+
+- name: Restart containerd service
+  become: true
+  ansible.builtin.service:
+    name: containerd
+    state: "{{ _containerd_runtime.changed | ternary('restarted', 'started') }}"
